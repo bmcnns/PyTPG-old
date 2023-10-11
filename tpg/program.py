@@ -3,12 +3,15 @@ import numpy as np
 from numba import njit
 import math
 from tpg.utils import flip
+from tpg.memory import get_memory
 
 """
 A program that is executed to help obtain the bid for a learner.
 """
 class Program:
 
+    # addressing mode (0 = registers, 1 = state, 2 = memory)
+    addressingModeRange = 2 # 3 if shared memory is enabled
     # operation is some math or memory operation
     operationRange = 6 # 8 if memory
     # destination is the register to store result in for each instruction
@@ -23,7 +26,7 @@ class Program:
             self.instructions = np.array(instructions, dtype=np.int32)
         else: # create random new
             self.instructions = np.array([
-                (random.randint(0,1),
+                (random.randint(0, Program.addressingModeRange - 1),
                     random.randint(0, Program.operationRange-1),
                     random.randint(0, Program.destinationRange-1),
                     random.randint(0, Program.sourceRange-1))
@@ -36,15 +39,19 @@ class Program:
     """
     Executes the program which returns a single final value.
     """
-    @njit
-    def execute(inpt, regs, modes, ops, dsts, srcs, memMatrix, memRows, memCols):
+    #@njit can't precompile when accessing memory?
+    # -- reenable after more investigation
+    def execute(inpt, regs, modes, ops, dsts, srcs):
+
+        memory = get_memory()
+
         regSize = len(regs)
         inptLen = len(inpt)
         for i in range(len(modes)):
             # first get source
             if modes[i] == 0:
                 src = regs[srcs[i]%regSize]
-            else:
+            elif modes[i] == 1:
                 src = inpt[srcs[i]%inptLen]
 
             # get data for operation
@@ -68,27 +75,10 @@ class Program:
                 if x < y:
                     regs[dest] = x*(-1)
             elif op == 6:
-                index = srcs[i]
-                index %= (memRows*memCols)
-                row = int(index / memRows)
-                col = index % memCols
-                regs[dest] = memMatrix[row, col]
+                regs[dest] = memory.read(srcs[i])
             elif op == 7:
-                # row offset (start from center, go to edges)
-                for i in range(int(memRows/2)):
-                    # probability to write (gets smaller as i increases)
-                    # need to modify to be more robust with different # of rows
-                    writeProb = 0.25 - (0.01*i)**2
-                    # column to maybe write corresponding value into
-                    for col in range(memCols):
-                        # try write to lower half
-                        if np.random.rand(1)[0] < writeProb:
-                            row = (int(memRows/2) - i) - 1
-                            memMatrix[row,col] = regs[col]
-                        # try write to upper half
-                        if np.random.rand(1)[0] < writeProb:
-                            row = int(memRows/2) + i
-                            memMatrix[row,col] = regs[col]
+                memory.write(y)
+
 
             if math.isnan(regs[dest]):
                 regs[dest] = 0
@@ -103,9 +93,7 @@ class Program:
     inpts, and outs (parallel) not None, then mutates until this program is
     distinct. If update then calls update when done.
     """
-    def mutate(self, pMutRep, pDelInst, pAddInst, pSwpInst, pMutInst,
-                regSize, uniqueProgThresh, inputs=None, outputs=None,
-                maxMuts=100):
+    def mutate(self, config, inputs=None, outputs=None, maxMuts=100):
         if inputs is not None and outputs is not None:
             # mutate until distinct from others
             unique = False
@@ -115,7 +103,7 @@ class Program:
                 maxMuts -= 1
 
                 unique = True # assume unique until shown not
-                self.mutateInstructions(pDelInst, pAddInst, pSwpInst, pMutInst)
+                self.mutateInstructions(config.pDelInst, config.pAddInst, config.pSwpInst, config.pMutInst)
 
                 # check unique on all inputs from all learners outputs
                 # input and outputs of i'th learner
@@ -124,12 +112,12 @@ class Program:
 
                     for j, input in enumerate(lrnrInputs):
                         output = lrnrOutputs[j]
-                        regs = np.zeros(regSize)
+                        regs = np.zeros(config.registerSize)
                         Program.execute(input, regs,
                             self.instructions[:,0], self.instructions[:,1],
                             self.instructions[:,2], self.instructions[:,3])
                         myOut = regs[0]
-                        if abs(output-myOut) < uniqueProgThresh:
+                        if abs(output-myOut) < config.uniqueProgThresh:
                             unique = False
                             break
 
@@ -138,8 +126,8 @@ class Program:
         else:
             # mutations repeatedly, random probably small amount
             mutated = False
-            while not mutated or flip(pMutRep):
-                self.mutateInstructions(pDelInst, pAddInst, pSwpInst, pMutInst)
+            while not mutated or flip(config.pMutProg):
+                self.mutateInstructions(config.pDelInst, config.pAddInst, config.pSwpInst, config.pMutInst)
                 mutated = True
 
     """

@@ -1,3 +1,4 @@
+from tpg.memory import Memory
 from tpg.program import Program
 from tpg.learner import Learner
 from tpg.team import Team
@@ -38,13 +39,7 @@ class Trainer:
     sharedMemory: Whether to use the shared memory module to have more long term
     memory.
     """
-    def __init__(self, actions, teamPopSize=360, rootBasedPop=True, sharedMemory=False,
-        gap=0.5, uniqueProgThresh=0, initMaxTeamSize=5, initMaxProgSize=128,
-        actionProgSize=64, registerSize=8,
-        pDelLrn=0.7, pAddLrn=0.7, pMutLrn=0.3, pMutProg=0.66, pMutAct=0.33,
-        pActAtom=0.5, pDelInst=0.5, pAddInst=0.5, pSwpInst=1.0, pMutInst=1.0,
-        pSwapMultiAct=0.66, pChangeMultiAct=0.40, doElites=True,
-        sourceRange=30720, memMatrixShape=(100,8)):
+    def __init__(self, actions, config):
 
         # store all necessary params
 
@@ -56,25 +51,8 @@ class Trainer:
             self.actions = range(len(actions))
             self.actionLengths = list(actions)
 
-        self.teamPopSize = teamPopSize
-        self.rootBasedPop = rootBasedPop
-        self.gap = gap # portion of root teams to remove each generation
-        # threshold to accept mutated programs
-        self.uniqueProgThresh = uniqueProgThresh # about 1e-5 is good
-
-        self.pDelLrn = pDelLrn
-        self.pAddLrn = pAddLrn
-        self.pMutLrn = pMutLrn
-        self.pMutProg = pMutProg
-        self.pMutAct = pMutAct
-        self.pActAtom = pActAtom
-        self.pDelInst = pDelInst
-        self.pAddInst = pAddInst
-        self.pSwpInst = pSwpInst
-        self.pMutInst = pMutInst
-        self.pSwapMultiAct = pSwapMultiAct
-        self.pChangeMultiAct = pChangeMultiAct
-        self.doElites = doElites
+        # store TPG configuration
+        self.config = config
 
         self.teams = []
         self.rootTeams = []
@@ -85,24 +63,29 @@ class Trainer:
         self.generation = 0
 
         # extra operations if memory
-        if not sharedMemory:
+        if not config.sharedMemory:
             Program.operationRange = 6
         else:
             Program.operationRange = 8
 
-        Program.destinationRange = registerSize
-        Program.sourceRange = sourceRange
+        Program.destinationRange = self.config.registerSize
+        Program.sourceRange = self.config.sourceRange
 
-        self.initializePopulations(initMaxTeamSize, initMaxProgSize, registerSize)
+        self.initializePopulations(self.config.initMaxTeamSize,
+                                   self.config.initMaxProgSize,
+                                   self.config.registerSize)
 
-        self.memMatrix = np.zeros(shape=memMatrixShape)
+        # Initialize global memory module
+        Memory(self.config.memorySize)
+
 
     """
     Initializes a popoulation of teams and learners generated randomly with only
     atomic actions.
     """
     def initializePopulations(self, initMaxTeamSize, initMaxProgSize, registerSize):
-        for i in range(self.teamPopSize):
+        
+        for i in range(self.config.teamPopSize):
             # create 2 unique actions and learners
             ac1,ac2 = random.sample(self.actions, 2)
             ao1 = ActionObject(actionCode=ac1, actionLength=self.actionLengths[ac1],
@@ -153,13 +136,13 @@ class Trainer:
                         or any(task not in team.outcomes for task in skipTasks)]
 
         if len(sortTasks) == 0: # just get all
-            return [Agent(team, self.memMatrix, num=i) for i,team in enumerate(rTeams)]
+            return [Agent(team, num=i) for i,team in enumerate(rTeams)]
         else:
             # apply scores/fitness to root teams
             self.scoreIndividuals(sortTasks, multiTaskType=multiTaskType,
                                                                 doElites=False)
             # return teams sorted by fitness
-            return [Agent(team, self.memMatrix, num=i) for i,team in
+            return [Agent(team, num=i) for i,team in
                     enumerate(sorted(rTeams,
                                     key=lambda tm: tm.fitness, reverse=True))]
 
@@ -181,7 +164,7 @@ class Trainer:
     """
     def evolve(self, tasks=['task'], multiTaskType='min'):
         self.scoreIndividuals(tasks, multiTaskType=multiTaskType,
-                doElites=self.doElites) # assign scores to individuals
+                doElites=self.config.doElites) # assign scores to individuals
         self.saveFitnessStats() # save fitness stats
         self.select() # select individuals to keep
         self.generate() # create new individuals from those kept
@@ -318,7 +301,7 @@ class Trainer:
     """
     def select(self):
         rankedTeams = sorted(self.rootTeams, key=lambda rt: rt.fitness, reverse=True)
-        numKeep = len(self.rootTeams) - int(len(self.rootTeams)*self.gap)
+        numKeep = len(self.rootTeams) - int(len(self.rootTeams)*self.config.gap)
         deleteTeams = rankedTeams[numKeep:]
 
         # delete the team unless it is an elite (best at some task at-least)
@@ -346,8 +329,8 @@ class Trainer:
         oLearners = list(self.learners)
         oTeams = list(self.teams)
 
-        while (len(self.teams) < self.teamPopSize or
-                (self.rootBasedPop and self.countRootTeams() < self.teamPopSize)):
+        while (len(self.teams) < self.config.teamPopSize or
+                (self.config.rootBasedPop and self.countRootTeams() < self.config.teamPopSize)):
 
             # get parent root team, and child to be based on that
             parent = random.choice(self.rootTeams)
@@ -357,7 +340,7 @@ class Trainer:
             for learner in parent.learners:
                 child.addLearner(learner)
 
-            if self.uniqueProgThresh > 0:
+            if self.config.uniqueProgThresh > 0:
                 inputs, outputs = self.getLearnersInsOuts(oLearners)
             else:
                 inputs = None
@@ -365,11 +348,8 @@ class Trainer:
 
             actProgMut = (self.generation % 20 >= 10)
             # then mutates
-            child.mutate(self.pDelLrn, self.pAddLrn, self.pMutLrn, oLearners,
-                        self.pMutProg, self.pMutAct, self.pActAtom,
-                        self.actions, self.actionLengths, oTeams,
-                        self.pDelInst, self.pAddInst, self.pSwpInst, self.pMutInst,
-                        actProgMut, self.uniqueProgThresh, inputs=inputs, outputs=outputs)
+            child.mutate(self.config, oLearners, self.actions, self.actionLengths, oTeams,
+                        actProgMut, inputs=inputs, outputs=outputs)
 
             self.teams.append(child)
             self.rootTeams.append(child)
@@ -436,6 +416,7 @@ class Trainer:
         self.teamIdCount = Team.idCount
         self.learnerIdCount = Learner.idCount
         self.programIdCount = Program.idCount
+        self.addressingModeRange = Program.addressingModeRange
         self.operationRange = Program.operationRange
         self.destinationRange = Program.destinationRange
         self.sourceRange = Program.sourceRange
@@ -451,6 +432,7 @@ def loadTrainer(fileName):
     Team.idCount = trainer.teamIdCount
     Learner.idCount = trainer.learnerIdCount
     Program.idCount = trainer.programIdCount
+    Program.addressingModeRange = trainer.addressingModeRange
     Program.operationRange = trainer.operationRange
     Program.destinationRange = trainer.destinationRange
     Program.sourceRange = trainer.sourceRange

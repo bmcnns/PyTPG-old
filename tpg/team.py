@@ -21,20 +21,20 @@ class Team:
     """
     Returns an action to use based on the current state.
     """
-    def act(self, state, memMatrix, visited=set()):
+    def act(self, state, visited=set()):
         visited.add(self) # track visited teams
 
         topLearner = max([lrnr for lrnr in self.learners
                 if lrnr.isActionAtomic() or lrnr.actionObj.teamAction not in visited],
-            key=lambda lrnr: lrnr.bid(state, memMatrix))
+            key=lambda lrnr: lrnr.bid(state))
 
-        return topLearner.getAction(state, memMatrix, visited=visited)
+        return topLearner.getAction(state, visited=visited)
 
     """
     Same as act, but with additional features. Use act for performance.
     TODO: IMPLEMENT OTHER GET ACTION IN LEARNER TO MAKE THIS USEFUL.
     """
-    def act2(self, state, memMatrix, visited=set(), numStates=50):
+    def act2(self, state, visited=set(), numStates=50):
         visited.add(self) # track visited teams
 
         # first get candidate (unvisited) learners
@@ -45,13 +45,13 @@ class Team:
         topBid = learners[0].bid(state)
         learners[0].saveState(state, numStates=numStates)
         for lrnr in learners[1:]:
-            bid = lrnr.bid(state, memMatrix)
+            bid = lrnr.bid(state)
             lrnr.saveState(state, numStates=numStates)
             if bid > topBid:
                 topLearner = lrnr
                 topBid = bid
 
-        return topLearner.getAction(state, memMatrix, visited=visited)
+        return topLearner.getAction(state, visited=visited)
 
     """
     Adds learner to the team and updates number of references to that program.
@@ -96,15 +96,14 @@ class Team:
     """
     Mutates the learner set of this team.
     """
-    def mutate(self, pDelLrn, pAddLrn, pMutLrn, allLearners,
-                pMutProg, pMutAct, pActAtom, actionCodes, actionLengths, allTeams,
-                pDelInst, pAddInst, pSwpInst, pMutInst, progMutFlag,
-                uniqueProgThresh, inputs=None, outputs=None):
+    def mutate(self, config, allLearners, actionCodes,
+               actionLengths, allTeams, progMutFlag,
+               inputs=None, outputs=None):
 
         # delete some learners
-        p = pDelLrn
+        p = config.pDelLrn
         while flip(p) and len(self.learners) > 2: # must have >= 2 learners
-            p *= pDelLrn # decrease next chance
+            p *= config.pDelLrn # decrease next chance
 
             # choose non-atomic learners if only one atomic remaining
             learner = random.choice([l for l in self.learners
@@ -113,9 +112,9 @@ class Team:
             self.removeLearner(learner)
 
         # add some learners
-        p = pAddLrn
+        p = config.pAddLrn
         while flip(p):
-            p *= pAddLrn # decrease next chance
+            p *= config.pAddLrn # decrease next chance
 
             learner = random.choice([l for l in allLearners
                                      if l not in self.learners and
@@ -124,19 +123,22 @@ class Team:
 
         # give chance to mutate all learners
         oLearners = list(self.learners)
+
         for learner in oLearners:
-            if flip(pMutLrn):
+            if flip(config.pMutLrn):
                 if self.numAtomicActions() == 1 and learner.isActionAtomic():
                     pActAtom0 = 1 # action must be kept atomic if only one
                 else:
-                    pActAtom0 = pActAtom
+                    pActAtom0 = config.pActAtom
 
                 # must remove then re-add fresh mutated learner
                 self.removeLearner(learner)
+                
                 newLearner = Learner(learner=learner)
+
                 newLearner.mutate(
-                        pMutProg, pMutAct, pActAtom0, actionCodes, actionLengths,
-                        allTeams, self, progMutFlag, pDelInst, pAddInst,
-                        pSwpInst, pMutInst, uniqueProgThresh, inputs=None, outputs=None)
+                            config, actionCodes, actionLengths,
+                            allTeams, self, progMutFlag,
+                            inputs=None, outputs=None)
 
                 self.addLearner(newLearner)

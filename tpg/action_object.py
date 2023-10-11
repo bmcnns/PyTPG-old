@@ -39,25 +39,24 @@ class ActionObject:
     """
     Returns the action code, and if applicable corresponding real action(s).
     """
-    def getAction(self, state, memMatrix, visited):
+    def getAction(self, state, visited):
         if self.teamAction is not None:
             # action from team
-            return self.teamAction.act(state, memMatrix, visited)
+            return self.teamAction.act(state, visited)
         else:
             # atomic action
             if self.actionLength == 0:
                 return self.actionCode, None
             else:
-                return self.actionCode, self.getRealAction(state, memMatrix)
+                return self.actionCode, self.getRealAction(state)
 
     """
     Get the real valued portion of the action from the registers after program runs.
     """
-    def getRealAction(self, state, memMatrix):
+    def getRealAction(self, state):
         Program.execute(state, self.registers,
                         self.program.instructions[:,0], self.program.instructions[:,1],
-                        self.program.instructions[:,2], self.program.instructions[:,3],
-                        memMatrix, memMatrix.shape[0], memMatrix.shape[1])
+                        self.program.instructions[:,2], self.program.instructions[:,3])
 
         return self.registers[:self.actionLength]
 
@@ -70,12 +69,12 @@ class ActionObject:
     """
     Either swap the action, or modify the program, depending on a flag.
     """
-    def mutate(self, pMutProg, pDelInst, pAddInst, pSwpInst, pMutInst, uniqueProgThresh,
-            inputs, outputs, pActAtom, parentTeam, actionCodes, actionLengths, teams, progMutFlag):
+    def mutate(self, config, inputs,
+               outputs, parentTeam, actionCodes,
+               actionLengths, teams, progMutFlag):
         if progMutFlag and self.actionLength > 0:
             # mutate program
-            self.program.mutate(pMutProg, pDelInst, pAddInst, pSwpInst, pMutInst,
-                len(self.registers), uniqueProgThresh, inputs=inputs, outputs=outputs)
+            self.program.mutate(config, inputs=inputs, outputs=outputs)
         else:
             # dereference if old action is team
             if self.teamAction is not None:
@@ -83,7 +82,7 @@ class ActionObject:
                 self.teamAction = None
 
             # mutate action
-            if flip(pActAtom):
+            if flip(config.pActAtom):
                 # atomic
                 self.actionCode = random.choice(actionCodes)
                 self.actionLength = actionLengths[self.actionCode]

@@ -36,11 +36,10 @@ class Learner:
     """
     Get the bid value, highest gets its action selected.
     """
-    def bid(self, state, memMatrix):
+    def bid(self, state):
         Program.execute(state, self.registers,
                         self.program.instructions[:,0], self.program.instructions[:,1],
-                        self.program.instructions[:,2], self.program.instructions[:,3],
-                        memMatrix, memMatrix.shape[0], memMatrix.shape[1])
+                        self.program.instructions[:,2], self.program.instructions[:,3])
 
         return self.registers[0]
 
@@ -48,8 +47,8 @@ class Learner:
     Returns the action of this learner, either atomic, or requests the action
     from the action team.
     """
-    def getAction(self, state, memMatrix, visited):
-        return self.actionObj.getAction(state, memMatrix, visited)
+    def getAction(self, state, visited):
+        return self.actionObj.getAction(state, visited)
 
 
     """
@@ -61,25 +60,22 @@ class Learner:
     """
     Mutates either the program or the action or both.
     """
-    def mutate(self, pMutProg, pMutAct, pActAtom, actionCodes, actionLengths,
-            teams, parentTeam, progMutFlag, pDelInst, pAddInst, pSwpInst, pMutInst,
-            uniqueProgThresh, inputs=None, outputs=None):
-
+    def mutate(self, config, actionCodes, actionLengths,
+               teams, parentTeam, progMutFlag,
+               inputs=None, outputs=None):
         changed = False
         while not changed:
             # mutate the program
-            if flip(pMutProg):
+            if flip(config.pMutProg):
                 changed = True
-                self.program.mutate(pMutProg, pDelInst, pAddInst, pSwpInst, pMutInst,
-                    len(self.registers), uniqueProgThresh,
-                    inputs=inputs, outputs=outputs)
+                self.program.mutate(config, inputs=inputs, outputs=outputs)
 
             # mutate the action
-            if flip(pMutAct):
+            if flip(config.pMutAct):
                 changed = True
-                self.actionObj.mutate(pMutProg, pDelInst, pAddInst, pSwpInst, pMutInst,
-                    uniqueProgThresh, inputs, outputs, pActAtom, parentTeam, actionCodes,
-                    actionLengths, teams, progMutFlag)
+                self.actionObj.mutate(config, inputs, outputs,
+                                      parentTeam, actionCodes, actionLengths,
+                                      teams,progMutFlag)
 
     """
     Saves visited states for mutation uniqueness purposes.

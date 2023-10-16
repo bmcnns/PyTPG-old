@@ -60,7 +60,7 @@ class Learner:
     """
     Mutates either the program or the action or both.
     """
-    def mutate(self, config, actionCodes, actionLengths,
+    def mutate(self, config, pActAtom, actionCodes, actionLengths,
                teams, parentTeam, progMutFlag,
                inputs=None, outputs=None):
         changed = False
@@ -73,7 +73,7 @@ class Learner:
             # mutate the action
             if flip(config.pMutAct):
                 changed = True
-                self.actionObj.mutate(config, inputs, outputs,
+                self.actionObj.mutate(config, pActAtom, inputs, outputs,
                                       parentTeam, actionCodes, actionLengths,
                                       teams,progMutFlag)
 

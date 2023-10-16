@@ -137,7 +137,7 @@ class Team:
                 newLearner = Learner(learner=learner)
 
                 newLearner.mutate(
-                            config, actionCodes, actionLengths,
+                            config, pActAtom0, actionCodes, actionLengths,
                             allTeams, self, progMutFlag,
                             inputs=None, outputs=None)
 

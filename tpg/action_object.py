@@ -69,7 +69,7 @@ class ActionObject:
     """
     Either swap the action, or modify the program, depending on a flag.
     """
-    def mutate(self, config, inputs,
+    def mutate(self, config, pActAtom, inputs,
                outputs, parentTeam, actionCodes,
                actionLengths, teams, progMutFlag):
         if progMutFlag and self.actionLength > 0:
@@ -82,7 +82,7 @@ class ActionObject:
                 self.teamAction = None
 
             # mutate action
-            if flip(config.pActAtom):
+            if flip(pActAtom):
                 # atomic
                 self.actionCode = random.choice(actionCodes)
                 self.actionLength = actionLengths[self.actionCode]

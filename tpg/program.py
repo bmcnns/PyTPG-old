@@ -19,8 +19,6 @@ class Program:
     # the source index of the registers or observation
     sourceRange = 30720 # should be equal to input size (or larger if varies)
 
-    idCount = 0 # unique id of each program
-
     def __init__(self, instructions=None, maxProgramLength=128):
         if instructions is not None: # copy from existing
             self.instructions = np.array(instructions, dtype=np.int32)
@@ -32,8 +30,7 @@ class Program:
                     random.randint(0, Program.sourceRange-1))
                 for _ in range(random.randint(1, maxProgramLength))], dtype=np.int32)
 
-        self.id = Program.idCount
-        Program.idCount += 1
+        self.id = np.random.randint(1, 1000)
 
 
     """
@@ -41,7 +38,7 @@ class Program:
     """
     #@njit can't precompile when accessing memory?
     # -- reenable after more investigation
-    def execute(inpt, regs, modes, ops, dsts, srcs):
+    def execute(self, inpt, regs, modes, ops, dsts, srcs):
 
         memory = get_memory()
 
@@ -77,9 +74,7 @@ class Program:
             elif op == 6:
                 regs[dest] = memory.read(srcs[i])
             elif op == 7:
-                memory.write(y)
-
-
+                memory.buffer_write(program_id=self.id, value=y)
             if math.isnan(regs[dest]):
                 regs[dest] = 0
             elif regs[dest] == np.inf:
@@ -113,7 +108,7 @@ class Program:
                     for j, input in enumerate(lrnrInputs):
                         output = lrnrOutputs[j]
                         regs = np.zeros(config.registerSize)
-                        Program.execute(input, regs,
+                        self.execute(input, regs,
                             self.instructions[:,0], self.instructions[:,1],
                             self.instructions[:,2], self.instructions[:,3])
                         myOut = regs[0]

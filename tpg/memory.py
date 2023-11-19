@@ -15,6 +15,7 @@ class Memory:
     def initialize(self, numRegisters):
         self.numRegisters = numRegisters
         self.registers = np.zeros(numRegisters)
+        self.memoryBuffers = {}
 
     def read(self, index):
         if index > self.numRegisters:
@@ -30,6 +31,20 @@ class Memory:
         index = random.randint(0, self.numRegisters - 1)
         self.registers[index] = value
 
+    def buffer_write(self, program_id, value):
+        if program_id not in self.memoryBuffers:
+            self.memoryBuffers[program_id] = self.registers 
+
+        index = random.randint(0, self.numRegisters - 1)
+        self.memoryBuffers[program_id][index] = value
+        
+    def buffer_reset(self):
+        self.memoryBuffers = {}
+        
+    def display(self):
+        for program_id, buffer in self.memoryBuffers.items():
+            print(f"Buffer for program {program_id}")
+            print(buffer)
 
 def get_memory():
     if Memory._instance is None:

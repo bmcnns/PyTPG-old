@@ -45,20 +45,8 @@ class ActionObject:
             return self.teamAction.act(state, visited)
         else:
             # atomic action
-            if self.actionLength == 0:
-                return self.actionCode, None
-            else:
-                return self.actionCode, self.getRealAction(state)
+            return "BRYCE"
 
-    """
-    Get the real valued portion of the action from the registers after program runs.
-    """
-    def getRealAction(self, state):
-        Program.execute(state, self.registers,
-                        self.program.instructions[:,0], self.program.instructions[:,1],
-                        self.program.instructions[:,2], self.program.instructions[:,3])
-
-        return self.registers[:self.actionLength]
 
     """
     Returns true if the action is atomic, otherwise the action is a team.

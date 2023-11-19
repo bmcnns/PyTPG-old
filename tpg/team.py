@@ -1,5 +1,6 @@
 from tpg.utils import flip
 from tpg.learner import Learner
+from tpg.memory import get_memory
 import random
 
 """

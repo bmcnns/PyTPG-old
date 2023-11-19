@@ -384,32 +384,6 @@ class Trainer:
         return numRTeams
 
     """
-    Returns the input and output of each learner bid in each state.
-    As [learner, stateNum]. Inputs being states, outputs being floats (bid values)
-    """
-    def getLearnersInsOuts(self, learners, clearStates=True):
-        inputs = []
-        outputs = []
-        for lrnr in learners:
-            lrnrInputs = []
-            lrnrOutputs = []
-            for state in lrnr.states:
-                regs = np.zeros(len(lrnr.registers))
-                Program.execute(state, regs,
-                                lrnr.program.modes, lrnr.program.operations,
-                                lrnr.program.destinations, lrnr.program.sources)
-                lrnrInputs.append(state)
-                lrnrOutputs.append(regs[0])
-
-            if clearStates: # free up some space
-                lrnr.states = []
-
-            inputs.append(lrnrInputs)
-            outputs.append(lrnrOutputs)
-
-        return inputs, outputs
-
-    """
     Save the trainer to the file, saving any class values to the instance.
     """
     def saveToFile(self, fileName):

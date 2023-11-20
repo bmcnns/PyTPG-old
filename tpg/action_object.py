@@ -45,7 +45,7 @@ class ActionObject:
             return self.teamAction.act(state, visited)
         else:
             # atomic action
-            return "BRYCE"
+            return self.program.id
 
 
     """

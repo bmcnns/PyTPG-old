@@ -20,6 +20,12 @@ class Agent:
         return self.team.act(state)
 
     """
+    Gets the program ids associated with the root team of this agent
+    """
+    def getPrograms(self):
+        return self.team.getPrograms()
+
+    """
     Same as act, but with additional features. Use act for performance.
     """
     def act2(self, state, numStates=50):

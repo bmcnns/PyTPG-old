@@ -2,7 +2,6 @@ import numpy as np
 import logging
 import random
 
-
 class Memory:
     _instance = None
 
@@ -16,9 +15,13 @@ class Memory:
         self.numRegisters = numRegisters
         self.registers = np.zeros(numRegisters)
         self.memoryBuffers = {}
+        self.writeCount = 0
+        self.step = 0
+        self.generation = 0
+        self.history = {}
 
     def read(self, index):
-        if index > self.numRegisters:
+        if index >= self.numRegisters:
             return self.registers[index % self.numRegisters]
         elif index < 0:
             raise RuntimeError("Memory read failed. Provided index is a negative value.")
@@ -32,15 +35,17 @@ class Memory:
         self.registers[index] = value
 
     def commit(self, program_id):
-        self.registers = self.memoryBuffers[program_id].copy()
+        #if the program_id isn't in memory buffers, the program didn't alter memory (totally ok)
+        if program_id in self.memoryBuffers:
+            self.registers = self.memoryBuffers[program_id].copy()
+            self.writeCount += 1
 
-    def buffer_write(self, program_id, value):
+    def buffer_write(self, program_id, register, value):
         if program_id not in self.memoryBuffers:
             self.memoryBuffers[program_id] = self.registers.copy()
 
-        index = random.randint(0, self.numRegisters - 1)
-        self.memoryBuffers[program_id][index] = value
-        
+        self.memoryBuffers[program_id][register] = value
+
     def buffer_reset(self):
         self.memoryBuffers = {}
 
@@ -50,7 +55,7 @@ class Memory:
 
     def display(self):
         for program_id, buffer in self.memoryBuffers.items():
-            print(f"Buffer for program {program_id}")
+            print(f"Buffer for program {program_id}, total write count {self.writeCount}")
             print(buffer)
 
 def get_memory():

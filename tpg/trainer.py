@@ -75,10 +75,6 @@ class Trainer:
                                    self.config.initMaxProgSize,
                                    self.config.registerSize)
 
-        # Initialize global memory module
-        Memory(self.config.memorySize)
-
-
     """
     Initializes a popoulation of teams and learners generated randomly with only
     atomic actions.

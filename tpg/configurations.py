@@ -32,7 +32,7 @@ class DefaultConfiguration:
         self.doElites=True
         self.sourceRange=30720
 
-        self.memorySize = 25
+        self.memorySize = 4
 
 
     

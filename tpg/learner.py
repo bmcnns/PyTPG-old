@@ -48,8 +48,10 @@ class Learner:
     from the action team.
     """
     def getAction(self, state, visited):
-        return self.actionObj.getAction(state, visited)
-
+        if self.actionObj.isAtomic:
+            return self.program.id
+        else:
+            return self.actionObj.getAction(state, visited)
 
     """
     Returns true if the action is atomic, otherwise the action is a team.

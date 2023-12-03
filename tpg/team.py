@@ -29,6 +29,7 @@ class Team:
                 if lrnr.isActionAtomic() or lrnr.actionObj.teamAction not in visited],
             key=lambda lrnr: lrnr.bid(state))
 
+        return topLearner.getAction(state, visited)
         return topLearner.program.id
 
     """

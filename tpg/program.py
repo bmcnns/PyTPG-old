@@ -1,4 +1,6 @@
 import random
+
+import ipdb
 import numpy as np
 from numba import njit
 import math
@@ -19,6 +21,7 @@ class Program:
     # the source index of the registers or observation
     sourceRange = 30720 # should be equal to input size (or larger if varies)
 
+
     def __init__(self, instructions=None, maxProgramLength=128):
         if instructions is not None: # copy from existing
             self.instructions = np.array(instructions, dtype=np.int32)
@@ -31,6 +34,10 @@ class Program:
                 for _ in range(random.randint(1, maxProgramLength))], dtype=np.int32)
 
         self.id = np.random.randint(1, 1000)
+        self.memory = get_memory()
+
+        if self.id not in self.memory.history:
+            self.memory.history[self.id] = {}
 
 
     """
@@ -40,7 +47,11 @@ class Program:
     # -- reenable after more investigation
     def execute(self, inpt, regs, modes, ops, dsts, srcs):
 
-        memory = get_memory()
+        if self.memory.generation not in self.memory.history[self.id]:
+            self.memory.history[self.id][self.memory.generation] = {}
+
+        if self.memory.step not in self.memory.history[self.id][self.memory.generation]:
+            self.memory.history[self.id][self.memory.generation][self.memory.step] = []
 
         regSize = len(regs)
         inptLen = len(inpt)
@@ -72,16 +83,20 @@ class Program:
                 if x < y:
                     regs[dest] = x*(-1)
             elif op == 6:
-                regs[dest] = memory.read(srcs[i])
+                register = srcs[i] % len(self.memory.registers)
+                regs[dest] = self.memory.read(register)
+                #self.memory.history[self.id][self.memory.generation][self.memory.step].append(f"R[{dest}] <- Mem[{register}] ({regs[dest]})")
             elif op == 7:
-                memory.buffer_write(program_id=self.id, value=y)
+                register = dsts[i] % len(self.memory.registers)
+                self.memory.buffer_write(program_id=self.id, register=register, value=y)
+                #self.memory.history[self.id][self.memory.generation][self.memory.step].append(f"Mem[{register}] <- {y}")
+
             if math.isnan(regs[dest]):
                 regs[dest] = 0
             elif regs[dest] == np.inf:
                 regs[dest] = np.finfo(np.float64).max
             elif regs[dest] == np.NINF:
                 regs[dest] = np.finfo(np.float64).min
-
 
     """
     Mutates the program, by performing some operations on the instructions. If

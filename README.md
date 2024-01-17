@@ -1,8 +1,7 @@
-# tpg-python
-A python implementation of Tangled Program Graphs. A graph based genetic programming algorithm.
+# PyTPG
 
-## Recent API changes
-**Trainer Parameters:** rTeamPopSize removed, just use teamPopSize and use the rootBasedPop parameter (boolean) to affect whether the population is based on all teams or just root teams.
+[Multi-task learning in Atari video games with emergent tangled program graphs ACM GECCO: 195-202 Best Paper - DETA track
+Sara Khanchi, Malcolm Heywood, Nur Zincir-Heywood](https://dl.acm.org/doi/10.1145/3071178.3071213?cid=81100225830)
 
 ## Setup
 
@@ -60,10 +59,6 @@ trainer.evolve([environmentName])
 ### Other ways to use
 The above were just some of the important functions, and left out some necessary code for the environment, and a few other ways to use this API (some perhaps better). There are different ways to do things like withdrawing agents, rewarding agents, and evolving. And things become a bit tricky if you wish to work with multiprocessing, but its relatively straight forward to make it work. See [the examples page](./tpg_examples.ipynb) for details.
 
-## TODO
-- Implement a sort of memory module with some learners reading and some writing.
-- Add convenience code to the utils file, such a simple method to run an agent in a gym environment with certain parameters, a method to transform the state, etc.
-
 ## Some Projects PyTPG was Used in
 - https://github.com/Ryan-Amaral/general-game-playing-tpg (old API version)
 - https://github.com/Ryan-Amaral/prosthetic-challenge-tpg (old API version)
@@ -74,7 +69,7 @@ The above were just some of the important functions, and left out some necessary
 - https://github.com/skellco/Tangled-Program-Graphs
 - https://github.com/LivinBreezy/TPG-J
 
-## Aknowledgements
+## Acknowledgements
 - Dr. Malcolm Heywood: My undergrad and Masters research supervisor.
 - Robert Smith: Provided an initial Java implementation of TPG, whiched I based this version on.
 - [Richard Wardin](https://github.com/Shalmezad): Helped fix a few bugs in early development.

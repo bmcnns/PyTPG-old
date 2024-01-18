@@ -16,13 +16,12 @@ import argparse
 import os
 import datetime
 
-def update(output_folder, env, generation, teamNum, score, frame):
+def update(output_folder, env, generation, teamNum, score, index):
     plt.clf()
     plt.imshow(env.render())
     plt.title(f"Cartpole Team #{teamNum}, Generation #{generation+1}, Score: {score}")
     plt.axis('off')
-
-    plt.savefig(os.path.join(output_folder, f"cartpole_{generation*10000000+teamNum*10000+frame}.png"))
+    plt.savefig(os.path.join(output_folder, f"cartpole_{index}.png"))
 
 def detect_changes(predecessor, successor):
     return [1 if pred != succ else 0 for pred, succ in zip(predecessor, successor)]
@@ -48,6 +47,7 @@ def main():
     qLearner = QLearner(customConfig.memorySize, 2, 0.8, 0.001)
     epsilon = 0.15
 
+    frame_index = 0
 
     env = gym.make('CartPole-v1', render_mode='rgb_array')
 
@@ -110,7 +110,10 @@ def main():
 
                 action = np.random.randint(2)
 
-                update(args.outputDirectory, env, generation, teamNum, score, i)
+                
+                update(args.outputDirectory, env, generation, teamNum, score, frame_index)
+                frame_index += 1
+
                 state, reward, isTerminated, isTruncated, _ = env.step(action)
 
                 score += reward

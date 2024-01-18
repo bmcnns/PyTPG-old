@@ -104,7 +104,7 @@ def main():
                     action = np.random.randint(2)
                 else:
                     if np.random.random() < epsilon:
-                        action = np.random.randint(2, i)
+                        action = np.random.randint(2)
                     else:
                         action = qLearner.predict(previousState).argmax()
 

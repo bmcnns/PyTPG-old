@@ -1,7 +1,7 @@
 name: Deploy on Cartpole environment 
 
 on:
-  deploy_on_cartpole:
+  workflow_dispatch:
     runs-on: ubuntu-latest
     inputs:
       teamPopSize:

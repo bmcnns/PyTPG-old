@@ -1,5 +1,26 @@
 name: Deploy on Cartpole environment 
 
+on:
+  deploy_on_cartpole:
+    runs-on: ubuntu-latest
+    inputs:
+      teamPopSize:
+        description: 'The number of agents per team'
+        required: true
+      memorySize:
+        description: 'The number of registers used in global memory'
+        required: true
+      numGenerations:
+        description: 'The number of generations to run for'
+        required: true
+      frameRate:
+        description: 'Frame rate of the output video'
+        required: true
+      
+
+        
+        
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -19,11 +40,11 @@ jobs:
 
       - name: Run Cartpole
         run: |
-          python cartpole.py --teamPopSize {{ github.teamPopSize }} --memorySize {{ github.memorySize }} --numGenerations {{ github.numGenerations }} --outputDirectory "bin/cartpole_$timestamp"
+          python cartpole.py --teamPopSize {{ github.event.inputs.teamPopSize }} --memorySize {{ github.event.inputs.memorySize }} --numGenerations {{ github.event.inputs.numGenerations }} --outputDirectory "bin/cartpole_$timestamp"
 
       - name: Compile video
         run: |
-          ffmpeg -framerate {{ github.framerate }} -i $timestamp/cartpole_%d.png -c:v libx264 -pix_fmt yuv420p bin/$timestamp/output.mp4
+          ffmpeg -framerate {{ github.event.inputs.frameRate }} -i $timestamp/cartpole_%d.png -c:v libx264 -pix_fmt yuv420p bin/$timestamp/output.mp4
 
       - name: Upload video
         uses: actions/upload-artifact@v2

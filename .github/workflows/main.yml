@@ -16,7 +16,7 @@ on:
       frameRate:
         description: 'Frame rate of the output video'
         required: true
-        
+
 jobs:
   deploy:
     runs-on: ubuntu-latest

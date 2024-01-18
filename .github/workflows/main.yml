@@ -1,0 +1,32 @@
+name: Deploy on Cartpole environment 
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: |
+            pip install -r requirements.txt 
+
+      - name: Run Cartpole
+        run: |
+          python cartpole.py --teamPopSize {{ github.teamPopSize }} --memorySize {{ github.memorySize }} --numGenerations {{ github.numGenerations }} --outputDirectory "bin/cartpole_$timestamp"
+
+      - name: Compile video
+        run: |
+          ffmpeg -framerate {{ github.framerate }} -i $timestamp/cartpole_%d.png -c:v libx264 -pix_fmt yuv420p bin/$timestamp/output.mp4
+
+      - name: Upload video
+        uses: actions/upload-artifact@v2
+        with:
+          name: $timestamp_cartpole
+          path: bin/$timestamp_cartpole.mp4

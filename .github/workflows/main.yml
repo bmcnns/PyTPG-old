@@ -16,10 +16,6 @@ on:
       frameRate:
         description: 'Frame rate of the output video'
         required: true
-      
-
-        
-        
 
 jobs:
   deploy:
@@ -45,7 +41,7 @@ jobs:
       - name: Compile video
         run: |
           ffmpeg -framerate {{ github.event.inputs.frameRate }} -i $timestamp/cartpole_%d.png -c:v libx264 -pix_fmt yuv420p bin/$timestamp/output.mp4
-
+          
       - name: Upload video
         uses: actions/upload-artifact@v2
         with:

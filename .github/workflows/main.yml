@@ -16,11 +16,7 @@ on:
       frameRate:
         description: 'Frame rate of the output video'
         required: true
-      
-
         
-        
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -44,14 +40,14 @@ jobs:
             
       - name: Run Cartpole
         run: |
-          python cartpole.py --teamPopSize ${{github.event.inputs.teamPopSize}} --memorySize ${{github.event.inputs.memorySize}} --numGenerations ${{github.event.inputs.numGenerations}} --outputDirectory "bin/cartpole_$timestamp"
+          python cartpole.py --teamPopSize ${{github.event.inputs.teamPopSize}} --memorySize ${{github.event.inputs.memorySize}} --numGenerations ${{github.event.inputs.numGenerations}} --outputDirectory "bin/"
 
       - name: Compile video
         run: |
-          ffmpeg -framerate ${{github.event.inputs.frameRate}} -i $timestamp/cartpole_%d.png -c:v libx264 -pix_fmt yuv420p bin/$timestamp/output.mp4
+          ffmpeg -framerate ${{github.event.inputs.frameRate}} -i bin/cartpole_%d.png -c:v libx264 -pix_fmt yuv420p bin/output.mp4
 
       - name: Upload video
         uses: actions/upload-artifact@v2
         with:
-          name: $timestamp_cartpole
-          path: bin/$timestamp_cartpole.mp4
+          name: cartpole
+          path: bin/output.mp4

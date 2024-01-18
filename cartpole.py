@@ -16,13 +16,13 @@ import argparse
 import os
 import datetime
 
-def update(output_folder, env, generation, frame):
+def update(output_folder, env, generation, teamNum, score, frame):
     plt.clf()
     plt.imshow(env.render())
-    plt.title('Cartpole Environment')
+    plt.title(f"Cartpole Team #{teamNum}, Generation #{generation+1}, Score: {score}")
     plt.axis('off')
 
-    plt.savefig(os.path.join(output_folder, f"cartpole_{generation*100000+frame}.png"))
+    plt.savefig(os.path.join(output_folder, f"cartpole_{generation*10000000+teamNum*10000+frame}.png"))
 
 def detect_changes(predecessor, successor):
     return [1 if pred != succ else 0 for pred, succ in zip(predecessor, successor)]
@@ -104,13 +104,13 @@ def main():
                     action = np.random.randint(2)
                 else:
                     if np.random.random() < epsilon:
-                        action = np.random.randint(2)
+                        action = np.random.randint(2, i)
                     else:
                         action = qLearner.predict(previousState).argmax()
 
                 action = np.random.randint(2)
 
-                update(args.outputDirectory, env, generation, i)
+                update(args.outputDirectory, env, generation, teamNum, score, i)
                 state, reward, isTerminated, isTruncated, _ = env.step(action)
 
                 score += reward

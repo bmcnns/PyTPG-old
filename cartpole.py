@@ -11,42 +11,75 @@ import numpy as np
 import pandas as pd
 from pprint import pprint
 
+import math
+
 import matplotlib.pyplot as plt
 import argparse
 import os
 import datetime
 
-def update(output_folder, env, generation, teamNum, score, index):
+def update(output_folder, env, generation, teamNum, score, index, registers, diffMatrix):
     plt.clf()
+
+    plt.subplot(1, 2, 1)
     plt.imshow(env.render())
     plt.title(f"Cartpole Team #{teamNum}, Generation #{generation+1}, Score: {score}")
     plt.axis('off')
+
+    plt.subplot(1, 2, 2)
+
+    dim = math.isqrt(len(registers))
+    data = np.array(registers).reshape((dim, dim))
+    diff = np.array(diffMatrix).reshape((dim, dim))
+
+    for i in range(dim):
+        for j in range(dim):
+            value = data[i, j]
+            text = f'{value:.2f}'
+
+            if diff[i, j] == 1:
+                plt.text(j + 0.5, i + 0.5, text, ha='center', va='center', color='red', fontsize=16)
+            else:
+                plt.text(j + 0.5, i + 0.5, text, ha='center', va='center', color='black', fontsize=16)
+
+    for i in range(dim + 1):
+        plt.axhline(i - 0.5, color='black', linewidth=1)
+
+    for j in range(dim + 1):
+        plt.axvline(j - 0.5, color='black', linewidth=1)
+
+    plt.xticks([])
+    plt.yticks([])
+    
     plt.savefig(os.path.join(output_folder, f"cartpole_{index}.png"))
 
+    
 def detect_changes(predecessor, successor):
     return [1 if pred != succ else 0 for pred, succ in zip(predecessor, successor)]
 
 def main():
+
     parser = argparse.ArgumentParser(description="Cartpole benchmark using TPG")
     parser.add_argument("--teamPopSize", type=int, help="Size of the teams")
     parser.add_argument("--memorySize", type=int, help="Number of global memory registers used")
     parser.add_argument("--numGenerations", type=int, help="Number of generations to run")
     parser.add_argument("--outputDirectory", type=str, help="Output folder for the run video")
-
-
     args = parser.parse_args()
 
+    # Create a folder to store the raw image data used to compile the video
     os.makedirs(args.outputDirectory, exist_ok=True)
 
+    # Configure TPG
     customConfig = DefaultConfiguration()
     customConfig.teamPopSize = args.teamPopSize
     customConfig.memorySize = args.memorySize
     numGenerations = args.numGenerations
     memory = Memory(customConfig.memorySize)
 
+    # Configure the Q-learner
     qLearner = QLearner(customConfig.memorySize, 2, 0.8, 0.001)
     epsilon = 0.15
-
+    
     frame_index = 0
 
     env = gym.make('CartPole-v1', render_mode='rgb_array')
@@ -98,6 +131,7 @@ def main():
 
                 after_memory_update = memory.registers
 
+                
                 nextState = detect_changes(before_memory_update, after_memory_update)
 
                 if generation < 2:
@@ -111,7 +145,7 @@ def main():
                 action = np.random.randint(2)
 
                 
-                update(args.outputDirectory, env, generation, teamNum, score, frame_index)
+                update(args.outputDirectory, env, generation, teamNum, score, frame_index, memory.registers, nextState)
                 frame_index += 1
 
                 state, reward, isTerminated, isTruncated, _ = env.step(action)

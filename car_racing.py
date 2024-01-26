@@ -18,15 +18,15 @@ import datetime
 def update(output_folder, env, generation, teamNum, score, index):
     plt.clf()
     plt.imshow(env.render())
-    plt.title(f"Cartpole Team #{teamNum}, Generation #{generation+1}, Score: {score}")
+    plt.title(f"Car Racing Team #{teamNum}, Generation #{generation+1}, Score: {score}")
     plt.axis('off')
-    plt.savefig(os.path.join(output_folder, f"cartpole_{index}.png"))
+    plt.savefig(os.path.join(output_folder, f"car_racing_{index}.png"))
 
 def detect_changes(predecessor, successor):
     return [1 if pred != succ else 0 for pred, succ in zip(predecessor, successor)]
 
 def main():
-    parser = argparse.ArgumentParser(description="Cartpole benchmark using TPG")
+    parser = argparse.ArgumentParser(description="Car Racing benchmark using TPG")
     parser.add_argument("--teamPopSize", type=int, help="Size of the teams")
     parser.add_argument("--memorySize", type=int, help="Number of global memory registers used")
     parser.add_argument("--numGenerations", type=int, help="Number of generations to run")
@@ -42,16 +42,16 @@ def main():
     customConfig.memorySize = args.memorySize
     numGenerations = args.numGenerations
 
-    qLearner = QLearner(customConfig.memorySize, 2, 0.8, 0.001)
+    qLearner = QLearner(customConfig.memorySize, 5, 0.8, 0.001)
     epsilon = 0.15
 
     frame_index = 0
 
-    env = gym.make('CartPole-v1', render_mode='rgb_array')
+    env = gym.make('CarRacing-v2', render_mode='rgb_array')
 
     fig = plt.Figure()
 
-    trainer = Trainer(actions=range(2), config=customConfig)
+    trainer = Trainer(actions=range(5), config=customConfig)
 
     rewardStats = []
 
@@ -92,10 +92,10 @@ def main():
                 memory_after_update = agent.getMemory()
 
                 if generation < 2:
-                    action = np.random.randint(2)
+                    action = np.random.randint(5)
                 else:
                     if np.random.random() < epsilon:
-                        action = np.random.randint(2)
+                        action = np.random.randint(5)
                     else:
                         action = qLearner.predict(memory_after_update).argmax()
 

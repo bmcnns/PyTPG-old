@@ -51,8 +51,8 @@ jobs:
         with:
           name: assault
           path: bin/output.mp4
-
-     - name: Upload results
+          
+      - name: Upload results
         uses: actions/upload-artifact@v2
         with:
           name: results

@@ -51,3 +51,9 @@ jobs:
         with:
           name: car_racing
           path: bin/output.mp4
+
+      - name: Upload results
+        uses: actions/upload-artifact@v2
+        with:
+          name: results
+          path: bin/car_racing_results.png

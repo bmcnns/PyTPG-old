@@ -51,3 +51,9 @@ jobs:
         with:
           name: lunar_lander
           path: bin/output.mp4
+
+      - name: Upload results
+        uses: actions/upload-artifact@v2
+        with:
+          name: results
+          path: bin/lunar_lander_results.png

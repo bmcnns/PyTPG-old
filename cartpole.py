@@ -4,7 +4,6 @@ import gym
 from tpg.trainer import Trainer
 from tpg.agent import Agent
 from tpg.qlearner import QLearner
-from tpg.memory import Memory, get_memory
 from tpg.configurations import DefaultConfiguration
 
 import numpy as np
@@ -42,7 +41,6 @@ def main():
     customConfig.teamPopSize = args.teamPopSize
     customConfig.memorySize = args.memorySize
     numGenerations = args.numGenerations
-    memory = Memory(customConfig.memorySize)
 
     qLearner = QLearner(customConfig.memorySize, 2, 0.8, 0.001)
     epsilon = 0.15
@@ -54,11 +52,8 @@ def main():
     fig = plt.Figure()
 
     trainer = Trainer(actions=range(2), config=customConfig)
-    memory.memory_reset()
 
     rewardStats = []
-
-    previousState = memory.registers
 
     for generation in range(numGenerations):
         rewards = []
@@ -79,26 +74,22 @@ def main():
 
             print(f"Gen #{generation}, Team #{teamNum}")
 
-            memory.step = 0
             isTerminal = False
             isTruncated = False
 
             while not isTerminal and not isTruncated and i < 500:
-                memory.step += 1
                 i += 1
-                memory.buffer_reset()
+
+                agent.clearMemory()
 
                 programs = agent.getPrograms()
 
-                winning_program_id = agent.act(state)
+                memory_before_update = agent.getMemory()
 
-                before_memory_update = memory.registers
+                # Update memory
+                agent.act(state)
 
-                memory.commit(program_id=winning_program_id)
-
-                after_memory_update = memory.registers
-
-                nextState = detect_changes(before_memory_update, after_memory_update)
+                memory_after_update = agent.getMemory()
 
                 if generation < 2:
                     action = np.random.randint(2)
@@ -106,7 +97,7 @@ def main():
                     if np.random.random() < epsilon:
                         action = np.random.randint(2)
                     else:
-                        action = qLearner.predict(previousState).argmax()
+                        action = qLearner.predict(memory_after_update).argmax()
 
                 action = np.random.randint(2)
 
@@ -126,9 +117,7 @@ def main():
                     print(nextState)
                     print(f"Action selected: {action}, Reward: {reward}")
                     """
-                    qLearner.train(previousState, nextState, reward, action)
-
-                previousState = nextState
+                    qLearner.train(memory_before_update, memory_after_update, reward, action)
 
                 if isTerminated or isTruncated:
                     break
@@ -136,22 +125,18 @@ def main():
             if i == 500:
                 print("Ran out of turns... giving up")
 
-            #get_memory().display()
-            #print(get_memory().registers)
 
             agent.reward(score)
 
             rewards.append(score)
 
-            print(f"Finished after {i} steps with cumulative reward {score}, writes: {memory.writeCount}...")
+            print(f"Finished after {i} steps with cumulative reward {score}...")
 
             if len(agents) == 0:
                 break
 
         rewardStats.append((min(rewards), max(rewards), sum(rewards)/len(rewards)))
         trainer.evolve()
-
-        memory.generation += 1
 
     print("Finished run")
 

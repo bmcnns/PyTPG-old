@@ -1,6 +1,6 @@
 from tpg.utils import flip
 from tpg.learner import Learner
-from tpg.memory import get_memory
+from tpg.memory import Memory
 import random
 
 """
@@ -8,16 +8,12 @@ The main building block of TPG. Each team has multiple learning which decide the
 action to take in the graph.
 """
 class Team:
-
-    idCount = 0
-
     def __init__(self):
         self.learners = []
         self.outcomes = {} # scores at various tasks
         self.fitness = None
         self.numLearnersReferencing = 0 # number of learners that reference this
-        self.id = Team.idCount
-        Team.idCount += 1
+        self.memory = Memory(25)
 
     """
     Returns an action to use based on the current state.
@@ -27,10 +23,9 @@ class Team:
 
         topLearner = max([lrnr for lrnr in self.learners
                 if lrnr.isActionAtomic() or lrnr.actionObj.teamAction not in visited],
-            key=lambda lrnr: lrnr.bid(state))
+            key=lambda lrnr: lrnr.bid(state, self.memory))
 
-        return topLearner.getAction(state, visited)
-        return topLearner.program.id
+        self.memory.commit(topLearner.program.id)
 
     """
     Adds learner to the team and updates number of references to that program.

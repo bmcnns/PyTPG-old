@@ -36,8 +36,8 @@ class Learner:
     """
     Get the bid value, highest gets its action selected.
     """
-    def bid(self, state):
-        self.program.execute(state, self.registers,
+    def bid(self, state, memory):
+        self.program.execute(state, memory, self.registers,
                         self.program.instructions[:,0], self.program.instructions[:,1],
                         self.program.instructions[:,2], self.program.instructions[:,3])
 

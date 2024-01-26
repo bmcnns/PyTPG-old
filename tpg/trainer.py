@@ -332,6 +332,8 @@ class Trainer:
             parent = random.choice(self.rootTeams)
             child = Team()
 
+            child.memory.registers = parent.memory.registers.copy()
+
             # child starts just like parent
             for learner in parent.learners:
                 child.addLearner(learner)

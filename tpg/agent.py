@@ -25,6 +25,12 @@ class Agent:
     def getPrograms(self):
         return self.team.getPrograms()
 
+    def getMemory(self):
+        return self.team.memory.registers
+
+    def clearMemory(self):
+        self.team.memory.clear()
+    
     """
     Same as act, but with additional features. Use act for performance.
     """

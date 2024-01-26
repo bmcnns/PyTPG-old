@@ -161,7 +161,7 @@ def main():
     plt.tight_layout()
 
     # Show the plot
-    plt.savefig(os.path.join(output_folder, f"cartpole_results.png"))
+    plt.savefig(os.path.join(args.outputDirectory, f"cartpole_results.png"))
 
 if __name__ == "__main__":
     main()

@@ -137,5 +137,31 @@ def main():
 
     print("Finished run")
 
+    rewardInfo = np.array(rewardStats)
+
+    min_rewards = rewardInfo[:, 0]
+    max_rewards = rewardInfo[:, 1]
+    avg_rewards = rewardInfo[:, 2]
+
+    # Create a figure with subplots
+    fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(18, 6))
+
+    # Plot rewards over time
+    episodes = range(1, len(min_rewards) + 1)
+    axes.plot(episodes, min_rewards, label='Min Rewards', color='#1f78b4', alpha=0.8)
+    axes.plot(episodes, max_rewards, label='Max Rewards', color='#33a02c', alpha=0.8)
+    axes.plot(episodes, avg_rewards, label='Avg Rewards', color='#e31a1c', alpha=0.8)
+    axes.set_title('Rewards over Time')
+    axes.set_xlabel('Generation')
+    axes.set_ylabel('Reward')
+    axes.legend(loc='upper right')
+    axes.grid(True, linestyle='--', alpha=0.6)
+
+    # Adjust layout
+    plt.tight_layout()
+
+    # Show the plot
+    plt.savefig(os.path.join(output_folder, f"lunar_lander_results.png"))
+
 if __name__ == "__main__":
     main()

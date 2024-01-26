@@ -1,0 +1,53 @@
+name: Deploy on Assault environment 
+
+on:
+  workflow_dispatch:
+    runs-on: ubuntu-latest
+    inputs:
+      teamPopSize:
+        description: 'The number of agents per team'
+        required: true
+      memorySize:
+        description: 'The number of registers used in global memory'
+        required: true
+      numGenerations:
+        description: 'The number of generations to run for'
+        required: true
+      frameRate:
+        description: 'Frame rate of the output video'
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: |
+            pip install -r requirements.txt 
+
+      - name: Install ffmpeg
+        run: |
+            sudo apt install ffmpeg
+            
+      - name: Run Assault
+        run: |
+          python assault.py --teamPopSize ${{github.event.inputs.teamPopSize}} --memorySize ${{github.event.inputs.memorySize}} --numGenerations ${{github.event.inputs.numGenerations}} --outputDirectory "bin/"
+
+      - name: Compile video
+        run: |
+          ffmpeg -framerate ${{github.event.inputs.frameRate}} -i bin/assault_%d.png -c:v libx264 -pix_fmt yuv420p bin/output.mp4
+
+      - name: Upload video
+        uses: actions/upload-artifact@v2
+        with:
+          name: assault
+          path: bin/output.mp4

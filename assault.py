@@ -25,6 +25,16 @@ def update(output_folder, env, generation, teamNum, score, index):
 def detect_changes(predecessor, successor):
     return [1 if pred != succ else 0 for pred, succ in zip(predecessor, successor)]
 
+# To transform pixel matrix to a single vector.
+def getState(inState):
+    # each row is all 1 color
+    rgbRows = np.reshape(inState,(len(inState[0])*len(inState), 3)).T
+
+    # add each with appropriate shifting
+    # get RRRRRRRR GGGGGGGG BBBBBBBB
+    return np.add(np.left_shift(rgbRows[0], 16),
+        np.add(np.left_shift(rgbRows[1], 8), rgbRows[2]))
+
 def main():
     parser = argparse.ArgumentParser(description="Assault benchmark using TPG")
     parser.add_argument("--teamPopSize", type=int, help="Size of the teams")
@@ -67,7 +77,7 @@ def main():
                 break # no more agents, proceed to next gen
 
             state = env.reset()[0]
-
+            
             score = 0
 
             i = 0
@@ -87,7 +97,7 @@ def main():
                 memory_before_update = agent.getMemory()
 
                 # Update memory
-                agent.act(state)
+                agent.act(getState(np.array(state, dtype=np.int32)))
 
                 memory_after_update = agent.getMemory()
 

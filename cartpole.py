@@ -55,6 +55,8 @@ def main():
 
     rewardStats = []
 
+    previousState = np.zeros(customConfig.memorySize) 
+    
     for generation in range(numGenerations):
         rewards = []
         agents = trainer.getAgents()
@@ -91,13 +93,15 @@ def main():
 
                 memory_after_update = agent.getMemory()
 
+                nextState = detect_changes(memory_before_update, memory_after_update)
+
                 if generation < 2:
                     action = np.random.randint(2)
                 else:
                     if np.random.random() < epsilon:
                         action = np.random.randint(2)
                     else:
-                        action = qLearner.predict(memory_after_update).argmax()
+                        action = qLearner.predict(previousState).argmax()
 
                 update(args.outputDirectory, env, generation, teamNum, score, frame_index)
                 frame_index += 1
@@ -114,8 +118,10 @@ def main():
                     print(nextState)
                     print(f"Action selected: {action}, Reward: {reward}")
                     """
-                    qLearner.train(memory_before_update, memory_after_update, reward, action)
+                    qLearner.train(previousState, nextState, reward, action)
 
+                previousState = nextState
+                
                 if isTerminated or isTruncated:
                     break
 
